@@ -19,7 +19,7 @@ export class Response {
   @Prop({ default:0 })
   score: number;
 
-  @Prop({ type: [Number], default: [-1] })
+  @Prop({ type: [Number], default: [] })
   correctAnswersI:number[];
 
   @Prop({ required: true, default: Date.now })

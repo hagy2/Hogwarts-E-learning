@@ -109,6 +109,15 @@ export class ModuleController {
     return await this.moduleService.update(id, updateModuleDto, currentUser.userId);
   }
 
+    @Put('tookQuiz/:id')
+    @Roles(UserRole.Student)
+   
+    async tookQuiz(
+      @Param('id') id: string,
+      @CurrentUser() currentUser: { userId: string }
+    ) {
+      return await this.moduleService.tookQuizI(id,  currentUser.userId);
+    }
   @Delete(':id')
   @Roles(UserRole.Admin, UserRole.Instructor)
   async delete(@Param('id') id: string, @CurrentUser() currentUser: { userId: string }) {

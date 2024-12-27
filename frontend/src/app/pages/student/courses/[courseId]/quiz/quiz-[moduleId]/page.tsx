@@ -119,6 +119,9 @@ console.log("quiz",response.data);
 
       const createdResponse = await axiosInstance.post<response>("/responses", newResponse);
       setResponseState(createdResponse.data);
+      if (moduleId) {
+        await axiosInstance.put(`/modules/tookQuiz/${moduleId}`);
+      }
     } catch (error) {
       console.error("Error creating response", error);
     }
@@ -157,22 +160,76 @@ console.log("quiz",response.data);
           <p>Loading...</p>
         ) : responseState ? (
           <div>
-            <h2 className="text-xl font-semibold mb-4">Quiz Results</h2>
-            <p>
-              <strong>Score:</strong> {responseState.score}
-            </p>
-            {responseState.pass ? (
-              <p className="text-green-500 font-semibold mt-4">Congratulations! You passed the quiz!</p>
-            ) : (
-              <p className="text-red-500 font-semibold mt-4">You did not pass. Please try again.</p>
-            )}
-            <button
-              onClick={handleRetakeQuiz}
-              className="mt-6 px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded text-white"
-            >
-              Retake Quiz
-            </button>
-          </div>
+          <h2 className="text-xl font-semibold mb-4">Quiz Results</h2>
+          <p>
+            <strong>Score:</strong> {responseState.score}
+          </p>
+          {responseState.pass ? (
+            <p className="text-green-500 font-semibold mt-4">Congratulations! You passed the quiz!</p>
+          ) : (
+            <p className="text-red-500 font-semibold mt-4">You did not pass. Please study the module content and try again.</p>
+          )}
+          <ul className="space-y-4 mt-6">
+            {questions.map((q, index) => {
+              const isCorrect = responseState.correctAnswersI.includes(index);
+              const isMCQ = q.question.includes(",");
+              const parts = q.question.split(",");
+              const questionText = parts[0];
+              const options = isMCQ ? parts.slice(1) : ["True", "False"];
+              const userAnswer = responseState.answers.find(
+                (answer) => answer.questionId === q.id.toString()
+              )?.answer;
+
+              return (
+                <li
+                  key={q.id.toString()}
+                  className={`border-b border-gray-700 pb-4 ${
+                    isCorrect ? "bg-green-900" : "bg-red-900"
+                  }`}
+                >
+                  <p className="text-lg font-semibold">
+                    Question {index + 1}: {questionText}
+                  </p>
+                  <div className="ml-4 space-y-2">
+                    {options.map((option, optIndex) => {
+                      const isUserAnswer = userAnswer === option.trim();
+                      const isCorrectAnswer = isCorrect && option.trim() === userAnswer;
+
+                      return (
+                        <label
+                          key={optIndex}
+                          className={`flex items-center space-x-2 ${
+                            isCorrectAnswer
+                              ? "text-green-500 font-semibold"
+                              : isUserAnswer
+                              ? "text-yellow-500"
+                              : "text-white"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name={`question-${index}`}
+                            value={option.trim()}
+                            disabled
+                            checked={isUserAnswer}
+                            className="form-radio text-blue-500"
+                          />
+                          <span>{option.trim()}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          <button
+            onClick={handleRetakeQuiz}
+            className="mt-6 px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded text-white"
+          >
+            Retake Quiz
+          </button>
+        </div>
         ) : quiz ? (
           <div>
             <h2 className="text-xl font-semibold mb-4">

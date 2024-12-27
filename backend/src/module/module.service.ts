@@ -63,6 +63,22 @@ const updatedModule = await module.save();
 return  updatedModule;
 
   }
+  async tookQuizI(id: string, userId: string): Promise<Module> {
+    // Find the module by ID
+    const module = await this.moduleModel.findById(id).exec();
+    if (!module) throw new NotFoundException('Module not found');
+  
+    // Increment the `tookQuiz` count atomically
+    const updatedModule = await this.moduleModel.findByIdAndUpdate(
+      id,
+      { $inc: { tookQuiz: 1 } }, // Use MongoDB's $inc operator for atomic increments
+      { new: true } // Return the updated document
+    ).exec();
+  
+    if (!updatedModule) throw new NotFoundException('Failed to update module quiz count');
+    return updatedModule;
+  }
+  
   async findByCourse(course_id: string): Promise<Module[]> {
 
     const module = await this.moduleModel
