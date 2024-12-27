@@ -267,7 +267,7 @@ export default function CourseDetails() {
                   <button
                     onClick={() => router.push(`${courseId}/quiz/quiz?moduleId=${mod._id}`)}
                     className="text-blue-500 hover:text-blue-700 mt-2"
-                  >  View Quiz
+                  >  take Quiz
                   </button>
                   <div className="mt-2">
                     <h4 className="text-lg font-semibold text-gray-400">Resources:</h4>

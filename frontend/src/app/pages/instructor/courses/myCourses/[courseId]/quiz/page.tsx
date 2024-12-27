@@ -84,7 +84,20 @@ export default function QuizPage() {
   }, [courseId,moduleId]);
   
   const DeleteQuiz= async () => {
-    if(module.)
+    if(module?.tookQuiz==0){
+      try {
+        const updatedModule = {
+          TFcount: 0,
+          MCQcount:0
+        };
+    
+        await axiosInstance.put(`/modules/${module?._id}`, updatedModule);
+    }catch(error){
+console.error("cannot delete quiz",error);
+  }
+ } else{
+      alert("cannot delete a quiz after students already took it")
+    }
   };
 
   
@@ -117,21 +130,33 @@ export default function QuizPage() {
   };
 
   const handleUpdateQuizCounts = async (tf:number,mcq:number) => {
+    const updatedModule = {
+      TFcount: tf,
+      MCQcount:mcq
+    };
   //  if (!currentModule) return;
-  
+  if(module?.tookQuiz==0){
+
     try {
-      const updatedModule = {
-        TFcount: tf,
-        MCQcount:mcq
-      };
-  
+     
+  if(updatedModule.TFcount>QB.tf.length){
+    alert("tf counts is more than the tfs that are in the qb ")
+    return;
+  }if(updatedModule.MCQcount>QB.mcq.length){
+    alert("mcq counts is more than the mcqs that are in the qb ")
+    return;
+  }
       await axiosInstance.put(`/modules/${module?._id}`, updatedModule);
       
       alert("mcq and tf counts added ")
+      
     } catch (error) {
       console.error("Error updating module:", error);
       alert("Failed to update module. Please try again.");
     }
+  }else{
+    alert("cannot update a quiz that was already taken by students ");
+  }
   };
   const handleDeleteTF = async (id:string) => {
     try {
@@ -296,7 +321,24 @@ export default function QuizPage() {
     <div className="w-full max-w-4xl bg-[#202020] p-8 rounded-lg shadow-lg text-white">
           <p className="text-xl mb-4">TF count:{module?.TFcount}</p>
           <p className="text-l mb-4">MCQ count: {module?.MCQcount}</p>
+          <p className="text-l mb-4">Students who took the quiz: {module?.tookQuiz}</p>
           </div>
+          <div className="w-full max-w-4xl bg-[#202020] p-8 rounded-lg shadow-lg text-white mt-8">
+  <h2 className="text-2xl font-bold mb-4">Delete Quiz</h2>
+  <button
+    onClick={() => {
+      const confirmDelete = window.confirm(
+        "Are you sure you want to delete the quiz? This action cannot be undone."
+      );
+      if (confirmDelete) {
+        DeleteQuiz();
+      }
+    }}
+    className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-700"
+  >
+    Delete Quiz
+  </button>
+</div>
     <div className="w-full max-w-4xl bg-[#202020] p-8 rounded-lg shadow-lg text-white">
       <div className="flex justify-between items-center mb-4">
         <div className="flex space-x-2">

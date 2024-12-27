@@ -27,9 +27,10 @@ export class ResponsesService {
    let quizQs=quiz.quizQuestions;
    let answers=createdResponse.answers
    for(let i=0;i<answers.length;i++){
-   if(answers[i].answer===quiz.quizQuestions[i].correctAnswer)
+   if(answers[i].answer===quiz.quizQuestions[i].correctAnswer){
     score++;
   createdResponse.correctAnswersI.push(i);
+   }
    }
    let scorePrecentage=(score/quiz.quizQuestions.length)*100;
    if(scorePrecentage>75)

@@ -3,7 +3,8 @@
     "@nestjs/mongoose": "^10.1.0",
     "axios": "^1.7.9",
     "csv-parser": "^3.0.0",
-    "mongoose": "^8.8.3"
+    "mongoose": "^8.8.3",
+    "python": "^0.0.4"
   },
   "devDependencies": {
     "@nestjs/testing": "^10.4.12",
