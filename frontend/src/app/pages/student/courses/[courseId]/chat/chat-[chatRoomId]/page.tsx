@@ -4,6 +4,9 @@ import { useRouter, usePathname } from 'next/navigation';
 import axiosInstance from "../../../../../../utils/axiosInstance";
 import Layout from "../../../../components/layout";
 import Cookies from "js-cookie";
+import io, { Socket } from 'socket.io-client';
+
+
 
 interface ChatRoom {
   _id: string;
@@ -37,21 +40,21 @@ export default function ChatRoomDetails() {
   const [creatorName, setCreatorName] = useState("");
   const [courseName, setCourseName] = useState("");
   const [newMessageContent, setNewMessageContent] = useState("");
-  const [participantNames, setParticipantNames] = useState<{
-    [key: string]: string;
-  }>({});
+  const [participantNames, setParticipantNames] = useState<{ [key: string]: string }>({});
   const [isParticipant, setIsParticipant] = useState(false);
 
-  const router = useRouter();
   const pathname = usePathname();
   const userId = Cookies.get("userId");
 
   const [actualChatRoomId, setActualChatRoomId] = useState<string | null>(null);
   const [courseId, setCourseId] = useState<string | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
-  // Extract IDs from URL
+
+
+
   useEffect(() => {
-    const segments = pathname.split("/").filter(Boolean); // Simplified filter
+    const segments = pathname.split("/").filter(Boolean);
     const courseIdIndex = segments.indexOf("courses") + 1;
     const chatRoomIdIndex = segments.findIndex((s) => s.startsWith("chat-"));
 
@@ -59,77 +62,50 @@ export default function ChatRoomDetails() {
       setCourseId(segments[courseIdIndex]);
     }
     if (chatRoomIdIndex > -1) {
-      setActualChatRoomId(segments[chatRoomIdIndex].slice(5)); // Extract after "chat-"
+      setActualChatRoomId(segments[chatRoomIdIndex].slice(5));
     }
   }, [pathname]);
 
-  // Fetch chat room data, including participant names
   useEffect(() => {
+
+
     const fetchChatRoomData = async () => {
       if (!actualChatRoomId) return;
 
       try {
-        const chatRoomResponse = await axiosInstance.get<ChatRoom>(
-          `/chat-rooms/${actualChatRoomId}`
-        );
-        const chatRoomData = chatRoomResponse.data;
-        setChatRoom(chatRoomData);
+        const chatRoomResponse = await axiosInstance.get<ChatRoom>(`/chat-rooms/${actualChatRoomId}`);
+        setChatRoom(chatRoomResponse.data);
 
-        const creatorResponse = await axiosInstance.get<User>(
-          `/users/${chatRoomData.creator}`
-        );
+        const creatorResponse = await axiosInstance.get<User>(`/users/${chatRoomResponse.data.creator}`);
         setCreatorName(creatorResponse.data.name);
 
         if (courseId) {
-          const courseResponse = await axiosInstance.get<Course>(
-            `/course/${courseId}`
-          ); // Fixed endpoint to `/courses/${courseId}`
+          const courseResponse = await axiosInstance.get<Course>(`/course/${courseId}`);
           setCourseName(courseResponse.data.title);
         }
-        
 
-
-//hi
-
-        const fetchParticipantDetails = async () => {  // Important: Make this an async function
+        const fetchParticipantDetails = async () => {
           try {
-            console.log("Fetching participant details for participants:", chatRoomData.participants);
             const participantResponses = await Promise.all(
-              chatRoomData.participants.map(async (participantId) => {
-                console.log("Fetching details for participantId:", participantId._id);
+              chatRoomResponse.data.participants.map(async (participantId) => {
                 const participantResponse = await axiosInstance.get<User>(`/users/${participantId._id}`);
-                console.log(`Details fetched for participantId ${participantId._id}:`, participantResponse);
-                console.log("Participant name:", participantResponse.data.name);
                 return { id: participantResponse.data._id, name: participantResponse.data.name };
               })
             );
-      
+
             const newParticipantNames = participantResponses.reduce((acc, { id, name }) => {
               acc[id] = name;
               return acc;
             }, {} as { [key: string]: string });
-      
-            // Set the state with the new data!
-            setParticipantNames(newParticipantNames);
-      
-            console.log("Participant names map SET:", newParticipantNames); // Log after setting the state
 
             setParticipantNames(newParticipantNames);
-            setIsParticipant(userId ? chatRoomData.participants.some(p => p._id === userId) : false);
-        
-            console.log("Participant names SET:", newParticipantNames);
-            console.log("isParticipant SET:", userId ? chatRoomData.participants.some(p => p._id === userId) : false)
-      
+            setIsParticipant(userId ? chatRoomResponse.data.participants.some(p => p._id === userId) : false);
           } catch (error) {
             console.error("Error fetching participant details:", error);
-            // Handle the error (e.g., display an error message)
           }
         };
 
-        await fetchParticipantDetails(); // Make sure to await it
-
-        
-
+        await fetchParticipantDetails();
 
       } catch (error) {
         console.error("Error fetching chat room data:", error);
@@ -139,9 +115,7 @@ export default function ChatRoomDetails() {
     const fetchMessages = async () => {
       if (!actualChatRoomId) return;
       try {
-        const response = await axiosInstance.get<Message[]>(
-          `chatmessage/message/${actualChatRoomId}`
-        );
+        const response = await axiosInstance.get<Message[]>(`chatmessage/message/${actualChatRoomId}`);
         setMessages(response.data);
       } catch (error) {
         console.error("Error fetching messages:", error);
@@ -149,27 +123,45 @@ export default function ChatRoomDetails() {
     };
 
 
+
+
+
     if (actualChatRoomId) {
       fetchChatRoomData();
       fetchMessages();
-      
     }
-  }, [actualChatRoomId, courseId, userId]); // userId added to dependency array
 
-  useEffect(() => {
-    console.log("Participant names:", participantNames); // Log the state
-}, [participantNames]); // Log whenever the state changes
+    const newSocket = io('http://localhost:3001', {
+      withCredentials: true // Ensure cookies are sent with the request
+
+    });
+
+    setSocket(newSocket);
+
+    console.log("Joining room", actualChatRoomId);
+
+
+    newSocket.emit('joinRoom', { chatRoomId: actualChatRoomId });
+
+
+    newSocket.on('receiveMessage', (newMessage) => {
+      setMessages(prevMessages => [...prevMessages, newMessage]);
+    });
+
+    return () => {  // Cleanup
+      newSocket.off('receiveMessage');
+      newSocket.disconnect(); // Disconnect when component unmounts
+
+    };
+  }, [actualChatRoomId, courseId, userId]);  // Added socket to dependencies
+
 
   const handleCreateMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!actualChatRoomId) return;
-    try {
-      const response = await axiosInstance.post<Message>("/chatmessage/message", {
-        content: newMessageContent,
-        chatRoomId: actualChatRoomId,
-      });
+    if (!actualChatRoomId || !newMessageContent || !socket) return;
 
-      setMessages([...messages, response.data]);
+    try {
+      socket.emit('sendMessage', { chatRoomId: actualChatRoomId, content: newMessageContent });
       setNewMessageContent("");
     } catch (error) {
       console.error("Error creating message", error);
@@ -212,7 +204,6 @@ export default function ChatRoomDetails() {
           <p className="text-lg mb-4">Participants:</p>
           <ul>
             {Object.keys(participantNames).map((id) => {
-              console.log("Mapping ID:", id, "Name:", participantNames[id]); // Log inside map
               return (
                 <li key={id}>
                   {participantNames[id] || "Loading..."}

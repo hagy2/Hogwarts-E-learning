@@ -1,4 +1,7 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { WsException } from '@nestjs/websockets';
+import { Socket } from 'socket.io';
+
 
 export const CurrentUser = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {
@@ -9,9 +12,13 @@ export const CurrentUser = createParamDecorator(
 // current-user.decorator.ts
 
 
-export const webuser = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext) => {
-    const client = ctx.switchToWs().getClient();  // Access the WebSocket client
-    return client.handshake.auth.user;  // Assuming the user info is available in `handshake.auth.user`
-  },
-);
+export const webuser = createParamDecorator((data: unknown, ctx: ExecutionContext) => {
+  const client = ctx.switchToWs().getClient<Socket>();
+  const user = client.data.user; // Retrieve user data attached during the handshake
+
+  if (!user) {
+    throw new WsException('User not authenticated');
+  }
+
+  return user;
+});
