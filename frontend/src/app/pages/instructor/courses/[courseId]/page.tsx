@@ -275,7 +275,7 @@ export default function CourseDetails() {
                       </p>
                       <p className="font-medium text-base">{moderatorNames[forum._id]}</p>
 
-                      {course.createdby === userId && (
+                      {String(course.createdBy) === userId && (
                         <button
                           onClick={(e) => handleForumDelete(forum._id, e)}
                           className="text-red-500 hover:underline mt-2"
