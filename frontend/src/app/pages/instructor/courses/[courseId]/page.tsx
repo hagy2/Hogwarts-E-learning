@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from 'next/navigation';
 import axiosInstance from "../../../../utils/axiosInstance";
 import Layout from "../../components/layout";
-import { course, module } from "@/app/_lib/page"; 
+import { course, module } from "@/app/_lib/page";
 import Cookies from "js-cookie";
 
 
@@ -198,7 +198,7 @@ export default function CourseDetails() {
       setNewChatRoomTitle('');
       setNewChatRoomParticipants([]);
       setNewChatRoomType('');
-      
+
     } catch (error) {
       console.error('Error creating chat room:', error);
     }
@@ -275,13 +275,15 @@ export default function CourseDetails() {
                       </p>
                       <p className="font-medium text-base">{moderatorNames[forum._id]}</p>
 
+                      {course.createdby === userId && (
                         <button
                           onClick={(e) => handleForumDelete(forum._id, e)}
                           className="text-red-500 hover:underline mt-2"
                         >
                           Delete Forum
                         </button>
-                      
+                      )}
+
                     </li>
                   ))}
                 </ul>
@@ -356,13 +358,13 @@ export default function CourseDetails() {
                         Moderator
                       </p>
                       <p className="font-medium text-base">{chatRoom._id}</p>
-                        <button
-                          onClick={(e) => handleChatRoomDelete(chatRoom._id, e)}
-                          className="text-red-500 hover:underline mt-2"
-                        >
-                          Delete Chat Room
-                        </button>
-                      
+                      <button
+                        onClick={(e) => handleChatRoomDelete(chatRoom._id, e)}
+                        className="text-red-500 hover:underline mt-2"
+                      >
+                        Delete Chat Room
+                      </button>
+
                     </li>
                   ))}
                 </ul>
