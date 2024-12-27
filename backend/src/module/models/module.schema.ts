@@ -32,14 +32,14 @@ export class Module {
 
   @Prop({
     type: String,
-    enum: ['easy', 'medium', 'hard'],
+    enum: ['Beginner', 'Intermediate', 'Advanced'],
     required: true
   })
   difficulty: string;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'questions', required: false })
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'questions',default :"000000000000000000000000" })
   questionBank_id: mongoose.Types.ObjectId;
-  
+
   @Prop({ default: 0 })
   ratingCount: number;
 
@@ -58,8 +58,7 @@ export class Module {
   @Prop({default:[]})
   keywords:string[];
 
-
-  
+@Prop({ default: 0 })
+tookQuiz: number;
 }
-
 export const ModuleSchema = SchemaFactory.createForClass(Module);

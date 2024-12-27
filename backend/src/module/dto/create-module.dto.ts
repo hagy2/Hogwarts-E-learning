@@ -12,4 +12,6 @@ export class CreateModuleDTO {
   keywords: string[];
     TFcount: number;
     MCQcount: number;
+      
+      tookQuiz: number;
 }

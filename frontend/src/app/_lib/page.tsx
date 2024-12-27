@@ -91,6 +91,7 @@ export interface module{
   averageRating: number;
   TFcount: number;
   MCQcount: number;
+  tookQuiz: number;
 } 
 export interface quiz{
   _id:mongoose.Types.ObjectId;
