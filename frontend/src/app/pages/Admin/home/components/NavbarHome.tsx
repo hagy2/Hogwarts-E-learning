@@ -17,12 +17,18 @@ const NavbarHome = () => {
           Hogwarts-E-learning
         </Link>
         <ul className="flex gap-4">
-          {/* Removed the "Home" link */}
+        <li>
+        <Link href="/pages/Admin/courses" className="hover:text-gray-300">
+              courses
+            </Link>
+          </li>
           <li>
             <Link href="/pages/Admin/profile" className="hover:text-gray-300">
               Profile
             </Link>
           </li>
+          
+            
           <li>
             <a href="#" onClick={handleSignOut} className="hover:text-gray-300">
               Sign Out

@@ -2,10 +2,10 @@
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from 'next/navigation';
 import axiosInstance from "../../../../utils/axiosInstance";
-import Layout from "../../components/layout";
-import { course, module } from "@/app/_lib/page"; 
+import Layout from "../../components/AL";
+import { course, module } from "@/app/_lib/page";
 import Cookies from "js-cookie";
-
+import { ObjectId } from "mongoose";
 
 interface Forum {
   _id: string;
@@ -41,13 +41,29 @@ export default function CourseDetails() {
   const [newChatRoomTitle, setNewChatRoomTitle] = useState('');
   const [newChatRoomParticipants, setNewChatRoomParticipants] = useState<string[]>([]);
   const [newChatRoomType, setNewChatRoomType] = useState('');
+
+  const userId = Cookies.get("userId");
+
   const router = useRouter();
   const { courseId } = useParams();
+  const [showAddModuleModal, setShowAddModuleModal] = useState(false);
+  const [showUpdateCourseModal, setShowUpdateCourseModal] = useState(false);
+  const [courseName, setName] = useState<string>("");
+  const [courseDescription, setDescription] = useState<string>("");
+  const [courseDl, setDl] = useState<string>("");
+  const [category, setCategory] = useState<string>("");
+  const [courseKeywords, setKeywords] = useState<string>("");
+  const [isOutdated, setOutdated] = useState(false);
   const [modules, setModules] = useState<module[]>([]);
   const [moduleTitle, setModuleTitle] = useState<string>('');
   const [moduleContent, setModuleContent] = useState<string>('');
   const [moduleDifficulty, setModuleDifficulty] = useState<string>('Beginner');
-  const userId = Cookies.get("userId");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<string>('');
+  const [uploadedFilePath, setUploadedFilePath] = useState<string>('');
+  const [showUpdateModuleModal, setShowUpdateModuleModal] = useState(false);
+  const[ShowAddResourceModal,setShowAddResourceModal] = useState(false);
+const [currentModule, setCurrentModule] = useState<module | null>(null);
 
 
 
@@ -85,13 +101,15 @@ export default function CourseDetails() {
         console.error("Error fetching forums", error);
       }
     }; const fetchModules = async () => {
-      try {
-        const response = await axiosInstance.get<module[]>(`/modules/course/${courseId}`);
-        setModules(response.data);
-      } catch (error) {
-        console.error("Error fetching modules", error);
-      }
-    };
+        try {
+          const response = await axiosInstance.get<module[]>(`/modules/course/${courseId}`);
+          setModules(response.data);
+        } catch (error) {
+          console.error("Error fetching modules", error);
+        }
+      };
+      
+  
 
     const fetchChatRooms = async () => { // From chatrooms code
       try {
@@ -111,7 +129,56 @@ export default function CourseDetails() {
     fetchModules(); // Call fetchModules
 
   }, [courseId]);
+const handleDeleteCourse = async () => {
+    try {
+      await axiosInstance.delete(`/course/${courseId}`);
+      alert("Course deleted successfully.");
+      router.push("/pages/instructor/courses");
+    } catch (error) {
+      console.error("Error deleting course", error);
+      alert("Failed to delete course. Please try again later.");
+    }
+  };
+  const handleDeleteModules = async (moduleId: string) => {
+   
+  
+    const confirmDelete = window.confirm("Are you sure you want to delete this module?");
+    if (!confirmDelete) return;
+  
+    try {
+      await axiosInstance.delete(`/modules/${moduleId}`);
+      alert("Module deleted successfully.");
+      setModules((prevModules) => prevModules.filter((mod) => mod._id.toString() !== moduleId));
+    } catch (error) {
+      console.error("Error deleting module", error);
+      alert("Failed to delete module. Please try again later.");
+    }
+  };
+  
 
+  const handleUpdateCourse = async () => {
+    try {
+      const updatedCourse = {
+        title: courseName,
+        description: courseDescription,
+        category: category,
+        difficultyLevel: courseDl,
+        createdAt: course?.createdAt,
+        isOutdated: isOutdated,
+        keywords: courseKeywords
+          .split(",")
+          .map((keyword) => keyword.trim())
+          .filter((keyword) => keyword.length > 0),
+      };
+
+      await axiosInstance.put(`/course/${course?._id}`, updatedCourse);
+      alert("Course updated successfully.");
+      setShowUpdateCourseModal(false);
+    } catch (error) {
+      console.error("Error updating course", error);
+      alert("Failed to update course. Please try again later.");
+    }
+  };
   const handleCreateForum = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -128,44 +195,8 @@ export default function CourseDetails() {
     }
   };
 
-  const handleEnroll = async () => {
-    try {
-      // Fetch the current user's data
-      const userResponse = await axiosInstance.get('/users/currentUser');
-      const user = userResponse.data;
-
-      // Check if the user is already enrolled in the course
-      if (user.courses.includes(courseId)) {
-        alert('You are already enrolled in this course.');
-        return;
-      }
-      const oldgbc = course.BeginnerCount;
-      const newbc = oldgbc + 1;
-      setbc(newbc);
-      try {
-        const updatedCourse = {
-          BeginnerCount: newbc
-        };
-        const courseResponse = await axiosInstance.put(`/course/count/${courseId}`, updatedCourse);
-
-      } catch (error) {
-        console.error("error incrementing count", error);
-      }
-
-      // Update the courses array
-      const updatedCourses = [...user.courses, courseId];
-
-      // Send the updated data back to the server
-      const response = await axiosInstance.put('/users/currentUser', { courses: updatedCourses });
-      console.log("Enroll response data:", response.data);
-      if (response.status === 200) {
-        alert('Enrolled successfully!');
-      }
-    } catch (error) {
-      console.error("Error enrolling in course", error);
-      alert('Failed to enroll in course.');
-    }
-  };
+  
+  
 
   const handleForumDelete = async (forumId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -198,7 +229,7 @@ export default function CourseDetails() {
       setNewChatRoomTitle('');
       setNewChatRoomParticipants([]);
       setNewChatRoomType('');
-      
+
     } catch (error) {
       console.error('Error creating chat room:', error);
     }
@@ -244,13 +275,44 @@ export default function CourseDetails() {
             Created At: {new Date(course.createdAt).toLocaleDateString()}
           </p>
           <p className="text-gray-400 mb-4">Is Outdated: {course.isOutdated ? 'Yes' : 'No'}</p>
-          <button
-            onClick={handleEnroll}
-            className="mt-4 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md"
-          >
-            Enroll
-          </button>
+           {/* Delete and Update Course Buttons */}
+        <div className="flex gap-4 mt-6">
+          
+
+         
         </div>
+    </div>
+             {/* Modules Section */}
+      <div className="w-full max-w-4xl bg-[#202020] p-8 rounded-lg shadow-lg text-white mb-8">
+        <h2 className="text-2xl font-bold mb-6">Modules</h2>
+        {modules.length > 0 ? (
+          <ul className="grid grid-cols-1 gap-4">
+            {modules.map((module) => (
+              <li
+                key={module._id.toString()}
+                className="bg-[#353535] px-4 py-3 rounded-md text-gray-200 cursor-pointer hover:bg-[#454545]"
+                onClick={() =>
+                  router.push(`/pages/instructor/courses/${courseId}/modules/${module._id}`)
+                }
+              >
+                <p className="text-xs uppercase tracking-wide text-gray-400">Title</p>
+                <p className="font-medium text-base">{module.title}</p>
+                <p className="text-xs uppercase tracking-wide text-gray-400">Content</p>
+                <p className="font-medium text-base">{module.content}</p>
+                 {/* Delete Button */}
+        <button
+          onClick={(e) => handleDeleteModules(module._id.toString())}
+          className="text-red-500 hover:underline mt-2"
+        >
+          Delete Module
+        </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-400">No modules available for this course.</p>
+        )}
+      </div>
 
         {/* Forums Section */}
         <div className="w-full max-w-4xl bg-[#202020] p-8 rounded-lg shadow-lg text-white mb-8"> {/* Added margin-bottom */}
@@ -275,6 +337,7 @@ export default function CourseDetails() {
                       </p>
                       <p className="font-medium text-base">{moderatorNames[forum._id]}</p>
 
+                     
                         <button
                           onClick={(e) => handleForumDelete(forum._id, e)}
                           className="text-red-500 hover:underline mt-2"
@@ -282,6 +345,7 @@ export default function CourseDetails() {
                           Delete Forum
                         </button>
                       
+
                     </li>
                   ))}
                 </ul>
@@ -356,13 +420,13 @@ export default function CourseDetails() {
                         Moderator
                       </p>
                       <p className="font-medium text-base">{chatRoom._id}</p>
-                        <button
-                          onClick={(e) => handleChatRoomDelete(chatRoom._id, e)}
-                          className="text-red-500 hover:underline mt-2"
-                        >
-                          Delete Chat Room
-                        </button>
-                      
+                      <button
+                        onClick={(e) => handleChatRoomDelete(chatRoom._id, e)}
+                        className="text-red-500 hover:underline mt-2"
+                      >
+                        Delete Chat Room
+                      </button>
+
                     </li>
                   ))}
                 </ul>
