@@ -4,9 +4,12 @@ import Image from "next/image";
 
 import React, { useEffect } from 'react';
 import {  onMessage } from 'firebase/messaging';
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
   useEffect(() => {
+    router.replace("/pages/home"); 
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       const unsubscribe = onMessage(messaging, (payload) => {
         console.log('Foreground push notification received:', payload);

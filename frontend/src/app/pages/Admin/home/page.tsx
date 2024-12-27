@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axiosInstance from "../../../utils/axiosInstance";
-import LayoutHome from "./components/LayoutHome";
+import LayoutHome from "../components/AL";
 import { course, user } from "@/app/_lib/page";
 
 export default function AdminHomepage() {

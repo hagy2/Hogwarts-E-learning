@@ -196,7 +196,7 @@ const handleDeleteModules = async (moduleId: string) => {
   try {
     await axiosInstance.delete(`/modules/${moduleId}`);
     alert("Module deleted successfully.");
-    setModules((prevModules) => prevModules.filter((mod) => mod._id !== moduleId));
+    setModules((prevModules) => prevModules.filter((mod) => mod._id.toString() !== moduleId));
 
   } catch (error) {
     console.error("Error deleting module", error);
@@ -282,7 +282,7 @@ const handleDeleteModules = async (moduleId: string) => {
                     {modules.length > 0 ? (
                         <ul className="space-y-4">
                             {modules.map((mod) => (
-                                <li key={mod._id} className="border-b border-gray-700 pb-4">
+                                <li key={mod._id.toString()} className="border-b border-gray-700 pb-4">
                                     <h3 className="text-xl font-semibold">{mod.title}</h3>
                                     <p className="text-gray-400">{mod.content}</p>
                                     <div className="mt-2">
