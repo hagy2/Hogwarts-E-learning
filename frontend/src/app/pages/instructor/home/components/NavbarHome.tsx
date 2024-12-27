@@ -24,6 +24,11 @@ const NavbarHome = () => {
             </Link>
           </li>
           <li>
+            <Link href="/pages/people" className="hover:text-gray-300">
+              People
+            </Link>
+          </li>
+          <li>
             <Link href="/pages/instructor/profile" className="hover:text-gray-300">
               Profile
             </Link>

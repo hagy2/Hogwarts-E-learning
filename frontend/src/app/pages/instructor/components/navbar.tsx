@@ -32,15 +32,12 @@ const Navbar = () => {
             </Link>
           </li>
           <li>
-            <Link href="#" className="hover:text-gray-300">
-              Chat
+            <Link href="/pages/people" className="hover:text-gray-300">
+              People
             </Link>
           </li>
-          <li>
-            <Link href="#" className="hover:text-gray-300">
-              Notifications
-            </Link>
-          </li>
+          
+          
           <li>
             <Link href="/pages/instructor/profile" className="hover:text-gray-300">
               Profile
