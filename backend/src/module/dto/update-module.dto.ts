@@ -12,4 +12,6 @@ export class UpdateModuleDTO {
        TFcount?: number;
        MCQcount?: number;
        questionBank_id?:mongoose.Types.ObjectId;
+       tookQuiz?: number;
+      
 }
