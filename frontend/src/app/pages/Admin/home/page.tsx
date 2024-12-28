@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import axiosInstance from "../../../utils/axiosInstance";
 import LayoutHome from "../components/AL";
 import { course, user } from "@/app/_lib/page";
-
+import { ObjectId } from "mongoose";
 export default function AdminHomepage() {
   const [courses, setCourses] = useState<course[]>([]);
   const [users, setUsers] = useState<user[]>([]);
@@ -51,12 +51,14 @@ export default function AdminHomepage() {
       user.role.toLowerCase().includes(userFilterText.toLowerCase())
   );
 
-  const handleDeleteCourse = async (courseId: string) => {
+  const handleDeleteCourse = async (courseId: ObjectId) => {
     try {
       await axiosInstance.delete(`/course/${courseId}`);
-      setCourses(courses.filter((course) => course._id.toString() !== courseId));
+      alert("Course deleted successfully.");
+     
     } catch (error) {
       console.error("Error deleting course", error);
+      alert("Failed to delete course. Please try again later.");
     }
   };
 
@@ -191,7 +193,7 @@ export default function AdminHomepage() {
                             Update
                           </button>
                           <button
-                            onClick={() => handleDeleteCourse(course._id.toString())}
+                            onClick={() => handleDeleteCourse(course._id)}
                             className="py-1 px-3 bg-red-600 hover:bg-red-700 text-white rounded-md"
                           >
                             Delete
