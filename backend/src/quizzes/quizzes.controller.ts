@@ -6,6 +6,8 @@ import {questions} from '../questions/models/questions.schema'
 import {Module,ModuleDocument} from '../module/models/module.schema';
 import { QuizzesService } from './quizzes.service';
 import { AuthGuard } from 'src/auth/guards/authentication.guard';
+import { UserRole } from 'src/user/models/user.schema';
+import { Roles } from 'src/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/guards/authorization.guard';
 @UseGuards(AuthGuard)
 @Controller('quizzes')
@@ -29,7 +31,7 @@ export class QuizzesController {
         return quiz;
     }
 
-
+   
     @Post()
     async createCourse(@Body()quizData: createQuizDTo):Promise<quizDocument> {
         const newQuiz = await this.QuizzesService.create(quizData);

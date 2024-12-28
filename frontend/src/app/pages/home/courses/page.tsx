@@ -48,7 +48,12 @@ const CourseDetailsPage: React.FC = () => {
           </p>
           <Link href="/home/courses" className="mt-4 inline-block py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-md">
             Back to Courses
-          </Link>
+          </Link><Link
+                      href={`/pages/Admin/courses/${course._id}`}
+                      className="text-blue-400 hover:underline mt-2 inline-block"
+                    >
+                      View Details
+                    </Link>
         </div>
       </main>
     </div>
