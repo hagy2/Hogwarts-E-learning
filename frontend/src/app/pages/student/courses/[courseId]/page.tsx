@@ -18,6 +18,7 @@ interface Forum {
 interface User {
   _id: string;
   name: string;
+  courses: string[];
 }
 
 interface chatrooms {
@@ -50,10 +51,34 @@ export default function CourseDetails() {
   const [progress, setProgress] = useState<Progress | null>(null);
 
   const userId = Cookies.get("userId");
+  const [isEnrolled, setIsEnrolled] = useState(false);
+
 
 
 
   useEffect(() => {
+
+    const fetchUserDetails = async () => {
+      try {
+      const response = await axiosInstance.get<User>(`/users/${userId}`);
+      console.log("User details:", response.data.courses);
+
+        // Check if the user is enrolled in the course
+        if (response.data.courses && typeof courseId === 'string' && response.data.courses.includes(courseId)) {
+          setIsEnrolled(true);
+        } else {
+          setIsEnrolled(false);
+        }
+
+
+      } catch (error) {
+      console.error("Error fetching user details", error);
+      }
+    };
+
+    fetchUserDetails();
+
+
     const fetchCourseDetails = async () => {
       try {
         const response = await axiosInstance.get<course>(`/course/${courseId}`);
@@ -266,6 +291,7 @@ export default function CourseDetails() {
         </div>
 
         {/* Modules Section */}
+        {isEnrolled && (
         <div className="w-full max-w-4xl bg-[#202020] p-8 rounded-lg shadow-lg text-white mb-8"> {/* Added margin-bottom */}
           <h2 className="text-2xl font-bold mb-4">Modules</h2>
           {modules.length > 0 ? (
@@ -318,8 +344,10 @@ export default function CourseDetails() {
           )}
 
         </div>
+        )}
 
         {/* Forums Section */}
+        {isEnrolled && (
         <div className="w-full max-w-4xl bg-[#202020] p-8 rounded-lg shadow-lg text-white mb-8"> {/* Added margin-bottom */}
           <h2 className="text-2xl font-bold mb-6">Forums</h2>
           <div className="flex gap-8">
@@ -400,8 +428,10 @@ export default function CourseDetails() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Chat Rooms Section */}
+        {isEnrolled && (
         <div className="w-full max-w-4xl bg-[#202020] p-8 rounded-lg shadow-lg text-white">
           <h2 className="text-2xl font-bold mb-6">Chat Rooms</h2>
           <div className="flex gap-8">
@@ -497,6 +527,7 @@ export default function CourseDetails() {
             </div>
           </div>
         </div>
+        )}
 
       </div>
     </Layout>
