@@ -13,10 +13,10 @@ import { Course,CourseDocument } from "../course/models/course.schema";//dep
 export class ResponsesService {
   
   constructor(@InjectModel(Response.name) private responseModel: Model<Response>,
-            @InjectModel(Quiz.name) private readonly quizModel: Model<Quiz>,
-            @InjectModel(Module.name) private readonly moduleModel: Model<Module>,
-            @InjectModel(Progress.name) private readonly progressModel: Model<Progress>,
-            @InjectModel(Course.name) private readonly courseModel: Model<Course>,) {}
+            @InjectModel(Quiz.name) private  quizModel: Model<Quiz>,
+            @InjectModel(Module.name) private  moduleModel: Model<Module>,
+            @InjectModel(Progress.name) private  progressModel: Model<Progress>,
+            @InjectModel(Course.name) private  courseModel: Model<Course>,) {}
 
 
   async create(ResponseData: Response ): Promise<responseDocument> {
@@ -27,10 +27,9 @@ export class ResponsesService {
    let quizQs=quiz.quizQuestions;
    let answers=createdResponse.answers
    for(let i=0;i<answers.length;i++){
-   if(answers[i].answer===quiz.quizQuestions[i].correctAnswer){
+   if(answers[i].answer===quiz.quizQuestions[i].correctAnswer)
     score++;
   createdResponse.correctAnswersI.push(i);
-   }
    }
    let scorePrecentage=(score/quiz.quizQuestions.length)*100;
    if(scorePrecentage>75)
@@ -44,6 +43,8 @@ let course=await this.courseModel.findById(module.courseId);
 
  let diff = module.difficulty;
 //let avgScore=score/
+createdResponse.nextLevel=module.isLast;
+
  if(createdResponse.nextLevel){
 
   if(diff==="Beginner"&&progress.performanceMetric==="Beginner"){
@@ -66,9 +67,44 @@ let course=await this.courseModel.findById(module.courseId);
 
 
  }
-  
-   createdResponse.score=scorePrecentage;
-   return createdResponse.save();
+
+
+ 
+       // const accessedModulesCount=progress.accessed_modules.length;
+// if(totalModules!=0)
+
+ //progress.completion_percentage=(accessedModulesCount/totalModules)*100;
+
+
+ //else progress.completion_percentage=0;
+
+ const relevantModules = await this.moduleModel.find({
+  courseId: progress.course_id,
+  $or: [
+    { difficulty: "Beginner" },
+    progress.performanceMetric === "Intermediate" ? { difficulty: "Intermediate" } : {},
+    progress.performanceMetric === "Advanced" ? { difficulty: "Advanced" } : {},
+  ],
+});
+
+progress.accessed_modules = Array.from(new Set([...progress.accessed_modules, ...relevantModules.map((mod) => mod._id)]));
+const totalModules = await this.moduleModel.countDocuments({ courseId: progress.course_id });
+
+const accessedModulesCount = progress.accessed_modules.length;
+console.log ("total modules",totalModules);
+progress.completion_percentage = totalModules !== 0 ? (accessedModulesCount / totalModules) * 100 : 0;
+console.log ("acc modules",accessedModulesCount);
+progress.totalScores += scorePrecentage;
+progress.avgScore=(progress.totalScores/(totalModules*100));
+await progress.save();
+
+createdResponse.score = scorePrecentage;
+return createdResponse.save();
+
+
+
+ 
+   
 
   }
 

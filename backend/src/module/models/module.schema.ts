@@ -58,7 +58,9 @@ export class Module {
   @Prop({default:[]})
   keywords:string[];
 
-@Prop({ default: 0 })
-tookQuiz: number;
+  @Prop({ default: 0 })
+  tookQuiz: number;
+  @Prop ({default:false})
+  isLast:boolean;
 }
 export const ModuleSchema = SchemaFactory.createForClass(Module);

@@ -12,6 +12,6 @@ export class CreateModuleDTO {
   keywords: string[];
     TFcount: number;
     MCQcount: number;
-      
+    isLast:boolean;
       tookQuiz: number;
 }

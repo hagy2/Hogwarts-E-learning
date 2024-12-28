@@ -10,4 +10,7 @@ export class UpdateUserDto {
     courses?: Course[] = [];
     emailVerified?: boolean;
     token?: string;
+
+ ratingsc?: Number;
+  avgRating?: Number;
 }

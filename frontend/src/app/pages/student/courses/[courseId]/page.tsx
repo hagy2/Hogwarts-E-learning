@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from 'next/navigation';
 import axiosInstance from "../../../../utils/axiosInstance";
 import Layout from "../../components/layout";
-import { course, module } from "@/app/_lib/page"; 
+import { course, module,Progress } from "@/app/_lib/page"; 
 import Cookies from "js-cookie";
 
 
@@ -47,6 +47,8 @@ export default function CourseDetails() {
   const [moduleTitle, setModuleTitle] = useState<string>('');
   const [moduleContent, setModuleContent] = useState<string>('');
   const [moduleDifficulty, setModuleDifficulty] = useState<string>('Beginner');
+  const [progress, setProgress] = useState<Progress | null>(null);
+
   const userId = Cookies.get("userId");
 
 
@@ -146,8 +148,19 @@ export default function CourseDetails() {
         const updatedCourse = {
           BeginnerCount: newbc
         };
-        const courseResponse = await axiosInstance.put(`/course/count/${courseId}`, updatedCourse);
+       
+        const newP={
+        user_id: userId,
+        course_id: courseId,
+        performanceMetric: "Beginner",
+        last_accessed:'2024-12-06T00:00:00.000+00:00'
+      }
 
+
+       const createResponse = await axiosInstance.post<Progress>("/progress", newP);
+    
+
+      setProgress(createResponse.data);
       } catch (error) {
         console.error("error incrementing count", error);
       }

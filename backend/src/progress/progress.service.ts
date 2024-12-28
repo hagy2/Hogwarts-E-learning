@@ -23,18 +23,19 @@ export class ProgressService {
     ) {}
 
    
-    async create(progressData: Progress): Promise<progressDocument> {
+      async create(progressData: Progress): Promise<progressDocument> {
         const newProgress= new this.progressModel(progressData); 
         const Course=await this.courseModel.findById(newProgress.course_id);
         const totalModules = await this.moduleModel.countDocuments({ course_id: newProgress.course_id });
         const accessedModulesCount=newProgress.accessed_modules.length;
-
-        /*if(newProgress.performanceMetric==="Intermediate")
+        let accessedModules ;
+        if(newProgress.performanceMetric==="Intermediate")
             accessedModules = await this.moduleModel.find({
                 $and: [
                   { course_id: newProgress.course_id },
                   {
                     $or: [
+
                       { difficulty: newProgress.performanceMetric },
                       { difficulty: 'Beginner' }
                     ]
@@ -48,36 +49,38 @@ export class ProgressService {
                 else{
                     accessedModules = await this.moduleModel.find({course_id: newProgress.course_id,difficulty:"Beginner" });
                 }
-             }*/    
+             } 
 
       
-             let totalScores=0;
+            
+
              if(totalModules!=0)
              newProgress.completion_percentage=(accessedModulesCount/totalModules)*100;
-else newProgress.completion_percentage=0;
+
+             else newProgress.completion_percentage=0;
+            
+             
              for(let i=0;i<newProgress.accessed_modules.length;i++){
               let module=  await this.moduleModel.findById(newProgress.accessed_modules[i]);
-              let quiz=await this.quizModel.findById(module.quiz_id);
-              
-              try{
-                
-              let response=await this.responseModel.findOne({quiz_id:quiz.id,user_id:newProgress.user_id})
-              totalScores+=response.score;
-              }catch{
-                console.log("no response matched quiz id:"+quiz.id+"user id: "+newProgress.user_id);
-              }
-              
              }
+
              if(totalModules!=0)
-             newProgress.avgScore=(totalScores/(totalModules*100));
-             else newProgress.completion_percentage=0;
+             newProgress.avgScore=(newProgress.totalScores/(totalModules*100));
+
+             else  newProgress.avgScore=0;
+             
              
         return await newProgress.save(); 
+
     }
+
+
+
     async findAll(): Promise<progressDocument[]> {
         let responses=await this.progressModel.find();
         return responses;
       }
+
       async findByUserIdAndCourseId(
         userId: string,
         courseId: string,
@@ -95,8 +98,34 @@ else newProgress.completion_percentage=0;
     
       async delete(id: string): Promise<progressDocument> {
        return  await this.progressModel.findByIdAndDelete(id);
-      }
-      async update(id: string, updateData: UpdateProgressDto): Promise<progressDocument> {
-        return await this.progressModel.findByIdAndUpdate(id, updateData, { new: true });  
-    }
+      }async update(id: string, updateData: UpdateProgressDto): Promise<progressDocument | null> {
+        // Find the existing progress document
+        const existingProgress = await this.progressModel.findById(id);
+        if (!existingProgress) {
+            console.error(`Progress with ID ${id} not found`);
+            return null;
+        }
+    
+        // Update fields directly from updateData
+        Object.assign(existingProgress, updateData);
+    
+        // Recalculate completion percentage if accessed_modules is updated
+        if (updateData.accessed_modules) {
+            const totalModules = await this.moduleModel.countDocuments({ course_id: existingProgress.course_id });
+            const accessedModulesCount = updateData.accessed_modules.length;
+    
+            existingProgress.completion_percentage =
+                totalModules !== 0 ? (accessedModulesCount / totalModules) * 100 : 0;
+        }
+    
+        // Recalculate average score if totalScores or totalModules are updated
+        if (updateData.totalScores !== undefined || updateData.accessed_modules) {
+            const totalModules = await this.moduleModel.countDocuments({ course_id: existingProgress.course_id });
+            existingProgress.avgScore =
+                totalModules !== 0 ? (existingProgress.totalScores / (totalModules * 100)) : 0;
+        }
+    
+        // Save the updated progress document
+        return await existingProgress.save();
+    }    
 }

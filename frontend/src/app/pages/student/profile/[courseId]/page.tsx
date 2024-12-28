@@ -6,6 +6,10 @@ import Layout from "@/app/components/layout";
 import { Progress } from "@/app/_lib/page";
 import { useParams } from "next/navigation";
 import Cookies from "js-cookie";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+import { Pie } from "react-chartjs-2";
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const userId = Cookies.get("userId");
 
@@ -16,6 +20,7 @@ export default function ProgressPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("user",userId);
     const fetchOrCreateProgress = async () => {
       try {
         if (userId && courseId) {
@@ -24,40 +29,30 @@ export default function ProgressPage() {
             `/progress/user/${userId}/course/${courseId}`
           );
           setProgress(response.data);
-        }
-    }catch(error){
-            console.error("error fetching progress",error)
-        }
-
-        if (!progress) {
-            let c;
-          try {
-            // If not found, create the progress record
-            const newP={
-                user_id: userId,
-              course_id: courseId,
-              performanceMetric: "Beginner",
-              last_accessed:'2024-12-06T00:00:00.000+00:00'
-            }
-            c=newP;
-            
-            const createResponse = await axiosInstance.post<Progress>("/progress", newP);
-    
-          
-            setProgress(createResponse.data);
-          } catch (error) {
-            console.log("c",c);
-            console.error("Failed to create progress for the user and course.",error);
-          }
-       
-        
-      finally {
-        setLoading(false);
+        }setLoading(false);
+      } catch (error) {
+        console.error("Error fetching progress:", error);
       }
-    };}
+
+    
+    };
 
     fetchOrCreateProgress();
   }, [userId, courseId]);
+
+  const handleDownload = () => {
+    if (progress) {
+      const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(
+        JSON.stringify(progress, null, 2)
+      )}`;
+      const downloadAnchorNode = document.createElement("a");
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", `progress_${courseId}.json`);
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+    }
+  };
 
   if (loading) {
     return <p className="text-gray-400">Loading...</p>;
@@ -75,12 +70,34 @@ export default function ProgressPage() {
     );
   }
 
+  const completionPercentage = progress?.completion_percentage || 0;
+  const remainingPercentage = 100 - completionPercentage;
+
+  const completionData = {
+    labels: ["Completed", "Remaining"],
+    datasets: [
+      {
+        data: [completionPercentage, remainingPercentage],
+        backgroundColor: ["rgba(75, 192, 192, 0.6)", "rgba(192, 75, 75, 0.6)"],
+        borderColor: ["rgba(75, 192, 192, 1)", "rgba(192, 75, 75, 1)"],
+        borderWidth: 1,
+      },
+    ],
+  };
+
   return (
     <Layout>
       <main className="min-h-screen bg-[#121212] py-12 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-2xl bg-[#202020] p-8 shadow-lg">
           <h1 className="mb-6 text-center text-3xl font-bold text-white">Progress</h1>
 
+          {/* Completion Pie Chart */}
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-white mb-4">Course Completion</h2>
+            <Pie data={completionData} />
+          </div>
+
+          {/* Progress Details */}
           <section className="text-gray-300">
             <p>
               <span className="font-semibold">User ID:</span> {progress?.user_id}
@@ -89,12 +106,10 @@ export default function ProgressPage() {
               <span className="font-semibold">Course ID:</span> {progress?.course_id}
             </p>
             <p>
-              <span className="font-semibold">Completion Percentage:</span>{" "}
-              {progress?.completion_percentage}%
+              <span className="font-semibold">Completion Percentage:</span> {completionPercentage}%
             </p>
             <p>
-              <span className="font-semibold">Performance Metric:</span>{" "}
-              {progress?.performanceMetric}
+              <span className="font-semibold">Performance Metric:</span> {progress?.performanceMetric}
             </p>
             <p>
               <span className="font-semibold">Last Accessed:</span>{" "}
@@ -110,6 +125,14 @@ export default function ProgressPage() {
                 : "No modules accessed yet."}
             </p>
           </section>
+
+          {/* Download Button */}
+          <button
+            onClick={handleDownload}
+            className="mt-6 w-full rounded bg-blue-500 py-2 px-4 text-white hover:bg-blue-600"
+          >
+            Download Progress Data
+          </button>
         </div>
       </main>
     </Layout>

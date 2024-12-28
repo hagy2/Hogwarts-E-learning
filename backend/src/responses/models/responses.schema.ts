@@ -30,5 +30,7 @@ export class Response {
 
   @Prop({ default: false})
   pass: boolean;
+
+
 }
 export const ResponseSchema = SchemaFactory.createForClass(Response);

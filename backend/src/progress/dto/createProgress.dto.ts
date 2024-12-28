@@ -8,6 +8,7 @@ export class CreateProgressDto {
     performanceMetric: 'Beginner' | 'Intermediate' | 'Advanced';
     accessed_modules :  mongoose.Types.ObjectId[];
     avgScore: number;
+    totalScores: number;
     
   }
   

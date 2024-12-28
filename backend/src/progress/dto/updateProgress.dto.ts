@@ -8,5 +8,6 @@ export class UpdateProgressDto {
     performanceMetric?: 'Beginner' | 'Intermediate' | 'Advanced';
     accessed_modules? :  mongoose.Types.ObjectId[];
     totalScores?:number;
+  
   }
   

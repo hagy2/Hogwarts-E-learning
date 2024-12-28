@@ -13,5 +13,6 @@ export class UpdateModuleDTO {
        MCQcount?: number;
        questionBank_id?:mongoose.Types.ObjectId;
        tookQuiz?: number;
+       isLast?:boolean;
       
 }
